@@ -3,6 +3,7 @@ from upemtk import *
 from math import *
 #--------------------- FIN DES IMPORTS ---------------------#
 
+#------------------------- VARIABLES -------------------------#
 rectanglePosAX = 300
 rectanglePosAY = 200
 rectanglePosBX = 800
@@ -14,10 +15,15 @@ petit_taille_cercle = 10
 #Ces 2 variables représentent les 2 tailles possibles de boules.
 
 tourJoueur=1
+
 matriceEmplacements = []
+#Variable permettant d'initialiser la matrice qui permettra de vérifier si lorsqu'on place un cercle, il y a intersection avec un autre.
 matriceEmplacementsJoueur1 = []
 matriceEmplacementsJoueur2 = []
+#Variables permettant d'initialiser les matrices qui seront utiliser afin de stocker les positions des cercles de chaque joueur.
+#----------------------- FIN DES VARIABLES -----------------------#
 
+#------------------------- FONCTIONS -------------------------#
 def nombre_Tours():
     """Permet de définir le nombre de tours total. Doit être pair pour que chaque joueur ait le même nombre de tours.
     """
@@ -26,8 +32,11 @@ def nombre_Tours():
         return nbr
     else:
         return False
-
-def verifierEmplacementBoule(emplacementClic):   
+    
+def verifier_clic_boule(emplacementClic):
+    """Permet de vérifier si l'utilisateur clique à l'intérieur d'une boule adverse.
+    """
+    taille_cercle=25
     x = emplacementClic[0]
     y = emplacementClic[1]
     
@@ -37,19 +46,44 @@ def verifierEmplacementBoule(emplacementClic):
         matriceEmplacementsJoueurAdversaire = matriceEmplacementsJoueur2
     else:
         matriceEmplacementsJoueurAdversaire = matriceEmplacementsJoueur1
-
+        
     f = True
     
     for matriceEmplacement in matriceEmplacementsJoueurAdversaire:
-        diffX = x - matriceEmplacement[0]
-        diffY = y - matriceEmplacement[1]
-        if (-50 < diffX < 50) and (-50 < diffY < 50):
-            f = False
-            print("Erreur, il y a intersection.")
+        if sqrt((matriceEmplacement[0] - x)**2+(matriceEmplacement[1] - y)**2)<=taille_cercle:
+            return False
         else:
-            f = True   
-    return f
+            f = True
+    return f    
 
+def verifierEmplacementBoule(emplacementClic): #marchepas (besoin d'ahmed)
+    """Permet de vérifier si, lors du placement d'une boule, il y a intersection avec une boule d'une autre couleur.
+    """
+    x = emplacementClic[0]
+    y = emplacementClic[1]
+    matriceEmplacementsJoueurAdversaire = []
+    
+    if tourJoueur==1:
+        matriceEmplacementsJoueurAdversaire = matriceEmplacementsJoueur2
+    else:
+        matriceEmplacementsJoueurAdversaire = matriceEmplacementsJoueur1
+        
+    if matriceEmplacementsJoueurAdversaire == []:
+        return True
+    else:    
+        compteur = 0
+        for matriceEmplacement in matriceEmplacementsJoueurAdversaire:
+            a=2*(matriceEmplacement[0]-x)
+            b=2*(matriceEmplacement[1]-y)
+            c=((matriceEmplacement[0]-x)**2)+((matriceEmplacement[1]-y)**2)-(25**2)+(25**2)
+            delta=((2*a*c)**2)-4*((a**2)+(b**2))*((c**2)-(b**2)*(25**2))
+            if delta > 0:
+                compteur += 1
+        if compteur > 0:
+            return True
+        else:
+            return False
+    
 def verifierEmplacementClic(emplacementClic):
     """Permet de resteindre le placement des boules uniquement au sein de la surface de jeu (Le rectangle).
     """
@@ -62,22 +96,15 @@ def verifierEmplacementClic(emplacementClic):
         return True
     else:
         return False
-
+    
 def dessinerBoule(emplacementClic):
     """ Permet de placer une boule, la couleur variera en fonction du joueur qui joue.
     """
     couleurBoule = 'blue'
     if tourJoueur==2:
         couleurBoule = 'red'
-
-    #print(emplacementClic)
-    #print('tourJoueur', tourJoueur)
-
     x = emplacementClic[0]
     y = emplacementClic[1]
-
-    #print("rectanglePosBX", rectanglePosBX)
-
     cercle(x, y, taille_cercle, couleur=couleurBoule, remplissage=couleurBoule, epaisseur=1)
 
 
@@ -101,39 +128,37 @@ def main():
         nbTours = nombre_Tours()
 
     dessiner_superficie()
+    texte_joueur = texte(600,100,"Tour du Joueur 1", couleur="blue") 
 
     nbTourReel = 0
     while nbTourReel!=nbTours:
-        #for i in range(nbTours):
         emplacementClic = attente_clic()
+        efface(texte_joueur)
         if nbTourReel % 2 == 0:
             tourJoueur = 1
+            texte_joueur = texte(600,100,"Tour du Joueur 2", couleur="red")
         else:
             tourJoueur = 2
-
+            texte_joueur = texte(600,100,"Tour du Joueur 1", couleur="blue") 
         if verifierEmplacementClic(emplacementClic):
-
-            if verifierEmplacementBoule(emplacementClic):
-                matriceEmplacements.append(emplacementClic)
-                dessinerBoule(emplacementClic)
-                #print("i", nbTourReel, "tourJoueur", tourJoueur)
-
-                if tourJoueur == 1:
-                    matriceEmplacementsJoueur1.append(emplacementClic)
-                else:
-                    matriceEmplacementsJoueur2.append(emplacementClic)
-
-            nbTourReel+=1
+            print(1)
+            if verifier_clic_boule(emplacementClic):
+                print(1)
+                if verifierEmplacementBoule(emplacementClic):
+                    print(1)
+                    matriceEmplacements.append(emplacementClic)
+                    dessinerBoule(emplacementClic)
+                    if tourJoueur == 1:
+                        matriceEmplacementsJoueur1.append(emplacementClic)
+                    else:
+                        matriceEmplacementsJoueur2.append(emplacementClic)
+            else:
+                print("clic dans boule")
+        nbTourReel+=1
+    efface(texte_joueur)        
     print("Fin de la partie !")
-
-            #print("matriceEmplacements General", matriceEmplacements)
-            #print("matriceEmplacementsJoueur1", matriceEmplacementsJoueur1)
-            #print("matriceEmplacementsJoueur2", matriceEmplacementsJoueur2)
-
-
-
-    attente_touche()
-
+    attente_clic()
+#---------------------- FIN DES FONCTIONS ----------------------#
 
 if __name__ == '__main__':
 
